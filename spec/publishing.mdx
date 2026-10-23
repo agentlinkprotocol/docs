@@ -1,0 +1,29 @@
+---
+title: "Publishing"
+---
+
+**Only a node publishes.** Every Card, zone entry, Ephemeral, Revocation, InboxMessage or VaultShard carries the
+countersignature of a valid node (proof of work, operator certificate) that really takes part in the network.
+
+1. The agent sends its agent-signed Card to its node over the local API.
+2. The node checks structure, agent signature, operator quota, sets `last_seen = now` and countersigns.
+3. It sends `Store::Card` to the 20 guardians of `card_key(agent_id)`.
+4. For every trait it computes the vector locally, finds the zone(s), groups trait indices per zone and sends
+   `Store::Zone { map_version, zone_id, card, trait_indices }` to the 20 guardians of each zone, in parallel.
+   **No vector travels.**
+5. Each zone guardian validates (see Objects), **recomputes the vectors**, refuses misplaced traits, drops the agent's
+   entries of lower versions and the traits that disappeared, indexes the new ones, and keeps the signed card so it can
+   re-emit verifiable material during repair.
+6. Usable in under a second: the card only needs to reach its guardians.
+
+## Republication
+
+The node re-countersigns and re-sends each of its agents' cards every 24 h with a fresh `last_seen`. A card not
+republished expires after at most 90 days.
+
+## Update and revocation
+
+A higher `version` replaces the lower one everywhere; guardians refuse replays of older versions (they remember the
+newest version seen, and revocations). A `Revocation` is sent to the card guardians and to every zone guardian of the
+card's traits; it is kept until the revoked version would have expired, so that an old copy can never come back.
+An operator revocation is also appended to the ledger.

@@ -1,0 +1,18 @@
+---
+title: "Roadmap"
+---
+
+1. **Foundation** — done: types, canonical encoding, identities, map, embedder, storage, single-node search, test vectors.
+2. **API and SDKs** — done: local API with generated OpenAPI, TypeScript and Python SDKs conformant to the vectors.
+3. **Network** — done on small networks: Kademlia, publication, search, replication, receipts over libp2p.
+4. **Simulator** — done: in-memory network; recall, churn, revocation and Sybil scenarios in CI.
+5. **Trust** — implemented: challenges on local rounds, seniority, reputation, quotas, diversity, ledger. To do: drand
+   beacon verification, challenge rounds on large networks, calibration by simulation.
+6. **Balancing, vault, inbox** — implemented; migration scheduler to wire to real capacity figures.
+7. **Console and observer mode** — done (v1).
+8. **Public test Atlas** at several operators — next.
+
+Later: phone agents, light nodes, position rotation, automatic zone splitting, sender-hidden mailbox, ASN diversity,
+threshold-signed versions, secret-shared queries, public files attached to cards (v2).
+
+Excluded for good: finding a person from a photo of their face.

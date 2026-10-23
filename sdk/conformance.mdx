@@ -1,0 +1,28 @@
+---
+title: "Conformance and test vectors"
+description: "A SDK that does not pass the vectors is not an Atlas SDK."
+---
+
+Rust, TypeScript and Python must produce **exactly the same bytes** for every signed object. The Grid repository
+publishes `test-vectors/v1.json`, generated from the Rust code (`cargo run -p alp-grid-core --bin gen-test-vectors`):
+fixed Ed25519 seeds, fixed timestamps, and for every object its canonical unsigned CBOR, signing hash, signature and
+full encoding.
+
+Both SDKs replay the file in their test suites:
+
+- `typescript-sdk/test/vectors.test.ts`
+- `python-sdk/tests/test_vectors.py`
+
+What is checked:
+
+| Object | Checks |
+| --- | --- |
+| Keys | pubkeys from seeds, `AgentId` derivation |
+| OperatorCert | canonical bytes, signing hash, signature |
+| Card | unsigned bytes, agent signing hash and signature, node signing hash and signature, full bytes, tamper detection |
+| Ephemeral | unsigned bytes, agent signature, full bytes |
+| Revocation (agent, operator) | unsigned bytes, hash, signature, full bytes |
+| Receipt (ok, rejected) | hash, full bytes, verification, tamper detection |
+
+The rules the vectors pin are in [Encoding](/spec/encoding). CI in the grid repository fails when the vectors or
+`openapi.json` are out of date with the code.

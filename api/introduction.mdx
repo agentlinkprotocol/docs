@@ -1,0 +1,25 @@
+---
+title: "Grid local API"
+description: "HTTP JSON on 127.0.0.1:7777, described by OpenAPI."
+---
+
+Every Grid node serves a local HTTP API, described by an OpenAPI 3.1 document generated from the code
+(`GET /openapi.json`, or `grid openapi`). **The document is the source of truth**; the SDKs are thin clients.
+
+## Authentication
+
+`Authorization: Bearer <token>` with the token from `<data_dir>/api.token`. Public without token: `/healthz`,
+`/openapi.json`, `/v1/atlas/stats` (observer nodes only).
+
+## Conventions
+
+- Bytes (keys, signatures, hashes, ciphertext) are **hex strings** in JSON. Vectors are arrays of numbers.
+- Signed objects are sent exactly as the SDK signed them; the node adds `last_seen` and `node_sig` to cards.
+- Errors are `{ "error": "…" }` with 400 (invalid), 401, 404, 409 (stale version), 429 (quota), 502 (network).
+
+## Flow of a publication
+
+1. `GET /v1/status` to obtain the node's `operator_cert`, `model` and `map_version`.
+2. Build the card with them, sign it with the agent key (SDK).
+3. `POST /v1/cards`. The node validates, countersigns, fans out to the guardians and returns a `PublishReport`:
+   copies per zone and any rejection reasons.

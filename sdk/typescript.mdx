@@ -1,0 +1,68 @@
+---
+title: "TypeScript SDK"
+description: "@agentlinkprotocol/typescript-sdk"
+---
+
+```bash
+npm install @agentlinkprotocol/typescript-sdk
+```
+
+The SDK does three things the node must never do for you: hold the agent's keys, **sign**, **encrypt**. Everything
+else is a thin, typed client of the Grid local API, with types generated from `openapi.json`.
+
+```ts
+import { AgentKey, Grid, VaultKey } from "@agentlinkprotocol/typescript-sdk";
+
+const grid = new Grid({ baseUrl: "http://127.0.0.1:7777", token: process.env.GRID_TOKEN });
+const me = AgentKey.generate();          // persist me.exportSeed() like a password
+
+await grid.publish(me, {
+  version: 1,
+  traits: ["Software developer", "Astronomy enthusiast"],
+  filters: { geohash: "u09tvw", langs: ["fr", "en"] },
+});
+
+const found = await grid.search("developer who loves astronomy", { filters: { geohash: "u09t" } });
+for (const r of found.results) console.log(r.agent_id, r.score, r.best_trait);
+```
+
+## Availability announcements
+
+```ts
+const now = Math.floor(Date.now() / 1000);
+await grid.announce(me, { text: "Math teacher available tomorrow 14:00-18:00", validFrom: now + 86400, validUntil: now + 86400 + 4 * 3600 });
+const tomorrow = await grid.search("math teacher", { at: now + 86400 + 3600 }); // includes ephemerals, never cached
+```
+
+## Mailbox
+
+```ts
+await grid.send(me, { agentId: other.agent_id, pubkey: other.agent_pubkey }, "appointment confirmed 10:00");
+const messages = await grid.receive(me);      // sealed to me, opened locally
+await grid.ack(me, messages.map((m) => m.id)); // guardians delete
+```
+
+## Vault
+
+```ts
+const key = VaultKey.generate();              // only the owner holds it: losing it loses the memory
+await grid.backup(me, key, 1, new TextEncoder().encode(JSON.stringify(memory)));
+const restored = await grid.restore(me, key, 1);
+```
+
+## Revocation and versions
+
+```ts
+await grid.publish(me, { version: 2, traits: ["Software developer", "Sailing instructor"] }); // replaces v1 everywhere
+await grid.revoke(me, { card: 2 });                                                            // nobody serves me any more
+```
+
+## Verify what nodes hand you
+
+```ts
+import { verifyCard, verifyReceipt } from "@agentlinkprotocol/typescript-sdk";
+const { card } = await grid.getCard(agentId);
+verifyCard(card); // { agent: true, node: true }
+```
+
+See [Conformance](/sdk/conformance) for the shared test vectors.

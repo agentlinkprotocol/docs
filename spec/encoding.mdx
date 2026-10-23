@@ -1,0 +1,39 @@
+---
+title: "Canonical encoding and signatures"
+---
+
+All objects are CBOR (RFC 8949) encoded under fixed rules so that every language produces the same bytes:
+
+1. Structures are CBOR maps with text keys **in declaration order** (never sorted).
+2. Integers in shortest form; **no floating point inside signed objects**.
+3. Fixed byte arrays (`[u8; 16]`, `[u8; 32]`, `[u8; 64]`) and blobs are byte strings (`bstr`), never arrays of integers.
+4. Absent optionals are `null`. Enums are externally tagged: unit variants are text (`"agent"`, `"ok"`), payload
+   variants are one-key maps (`{"card": 3}`, `{"rejected": "quota"}`).
+5. Vectors on the wire are `bstr` of little-endian IEEE 754 binary16 values (never inside signed objects).
+
+## Signatures
+
+A signature covers `blake3(domain || cbor(object without its signature fields))`.
+
+| Domain | Used by |
+| --- | --- |
+| `alp-card-v1` | agent signature of a Card |
+| `alp-ephemeral-v1` | agent signature of an Ephemeral |
+| `alp-revocation-v1` | Revocation |
+| `alp-receipt-v1` | Receipt |
+| `alp-opcert-v1` | OperatorCert |
+| `alp-node-sig-v1` | node countersignature of a Card, Ephemeral, InboxMessage, VaultShard |
+| `alp-ledger-v1` | LedgerEntry hash and witness signatures |
+| `alp-inbox-ack-v1` | inbox fetch authorisation and acks |
+| `alp-vault-v1` | agent signature of a VaultShard |
+
+### Card signatures
+
+- `agent_sig` covers every field **except** `last_seen`, `agent_sig`, `node_sig`.
+- `node_sig` covers every field except `node_sig`, i.e. including `last_seen` and `agent_sig`. The node attests
+  liveness and republishes with a fresh `last_seen` without the agent re-signing.
+
+## JSON (local API)
+
+In JSON, byte fields are lowercase hex strings and vectors are arrays of numbers. The canonical CBOR is what gets
+signed; JSON is only transport between an agent and its node.

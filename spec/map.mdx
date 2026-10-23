@@ -1,0 +1,19 @@
+---
+title: "The semantic map"
+---
+
+The map turns a vector into a zone id and is identical on every node.
+
+- **Structure**: `coarse` (256) centroids, each with `fine` (256) centroids: 65 536 zones.
+  `zone_id = coarse_index * fine + fine_index`.
+- **Assignment**: nearest coarse centroid by cosine, then nearest fine centroid inside it.
+  A vector also belongs to the second-best zone when `sim2 >= sim1 - 0.02`.
+- **Search probe**: the `nprobe` (4) nearest zones among the two nearest coarse groups, plus 2 decoy zones.
+- **File** `map-v<N>.bin`: `"ALPMAP01" | version u32 LE | dim u16 | coarse u16 | fine u16 | coarse f16[] | fine f16[]`,
+  all centroids L2-normalised. The blake3 of the file is pinned in the software.
+- **Construction**: hierarchical spherical k-means (k-means++ seeding, Lloyd iterations) on a large multilingual
+  corpus of profile-like sentences, fixed seed, with `grid-mapbuild`. Rebuildable by anyone.
+- **Model**: `alp-embed-v1`, 384 dimensions, L2-normalised, cosine similarity. Reference text prefix: none
+  (guardians and searchers embed identical text identically).
+
+Dual-version windows are described in [Versions](/governance/versions).

@@ -1,0 +1,35 @@
+---
+title: "Network parameters v1"
+---
+
+| Parameter | Value |
+| --- | --- |
+| Vector dimension | 384, f16 on the wire |
+| Zones | 65 536 (256 × 256) |
+| Second-zone margin | 0.02 |
+| Replication | 20 |
+| Kademlia k / α | 20 / 3 |
+| nprobe / decoys | 4 / 2 |
+| Guardians asked per zone | 3 |
+| Search hedge / timeout | 150 ms / 600 ms |
+| Max k | 100 |
+| Ordinary search cache | 5 min, never for `at` or ephemerals |
+| Exact scan limit per zone | 20 000 entries |
+| Card lifetime / republish | 90 days / 24 h |
+| Traits per card | 1..=32, ≤ 200 chars |
+| Endpoints per card | ≤ 8, ≤ 512 chars |
+| Ephemeral lifetime / active | 7 days / 10 per agent |
+| Inbox lifetime / message / pending per pair | 30 days / 64 KiB / 100 |
+| Vault lifetime / size / shards | 1 year / 256 MiB / 30 (10 data) |
+| Receipt retention | 30 days |
+| Identity proof of work | 20 bits |
+| Round | 30 s |
+| Controllers per node | 3 |
+| Challenge timeout | 2 s |
+| Earned day threshold | 90 % |
+| Seniority window | 365 days |
+| Guardians per operator / prefix | 2 / 2 |
+| Overflow fill | 80 % |
+| Virtual node unit | 64 GiB |
+| Trial period / base quota | 30 days / 10 agents |
+| Dual map window | 90 days |
