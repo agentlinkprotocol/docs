@@ -3,35 +3,47 @@ title: "Install The Grid"
 description: "One Rust binary, one config file."
 ---
 
-<Steps>
-  <Step title="Build or download">
+<Tabs>
+  <Tab title="One-line install (Linux)">
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/agentlinkprotocol/grid/main/deploy/install.sh | sh
+    ```
+    The script downloads the latest release for your CPU, verifies its checksum, installs `grid` into
+    `/usr/local/bin`, creates the `grid` system user, initialises `/var/lib/grid` (config, node key, API token),
+    installs and starts the `grid` systemd service. Variables: `GRID_BOOTSTRAP=<multiaddr,…>`,
+    `GRID_OBSERVER=1`, `GRID_CAPACITY_GIB=50`, `GRID_VERSION=v0.1.0`.
+
+    ```bash
+    sudo journalctl -u grid -f                              # logs
+    sudo grid status --config /var/lib/grid/grid.toml       # status (JSON)
+    sudo cat /var/lib/grid/api.token                        # local API token
+    ```
+  </Tab>
+  <Tab title="Docker">
+    ```bash
+    docker run -d --name grid --restart unless-stopped \
+      -p 4001:4001/udp -p 4001:4001 -p 127.0.0.1:7777:7777 -v grid-data:/data \
+      -e GRID_BOOTSTRAP=/dns4/boot.example.org/tcp/4001/p2p/12D3Koo... \
+      ghcr.io/agentlinkprotocol/grid:latest
+    docker exec grid cat /data/api.token
+    ```
+    Or `deploy/docker-compose.yml` from the repository. The API is bound to localhost on the host; the data
+    volume holds the key, token and database.
+  </Tab>
+  <Tab title="From source">
     ```bash
     git clone https://github.com/agentlinkprotocol/grid && cd grid
     cargo build --release
-    ```
-    Prebuilt binaries will be attached to releases.
-  </Step>
-  <Step title="Initialise">
-    ```bash
-    ./target/release/grid init
-    ```
-    Creates `~/.grid/grid.toml`, the node key (`node.key`, mode 0600) and the local API token (`api.token`).
-  </Step>
-  <Step title="Bootstrap">
-    Edit `~/.grid/grid.toml` and set `network.bootstrap` to one or more known nodes:
-    ```toml
-    [network]
-    bootstrap = ["/dns4/boot.example.org/tcp/4001/p2p/12D3KooW..."]
-    ```
-  </Step>
-  <Step title="Run">
-    ```bash
+    ./target/release/grid init          # ~/.grid/grid.toml, keys, API token
     ./target/release/grid run
     ```
-    The node solves its identity proof of work (a few seconds at 20 bits), loads the map, joins the network and
-    serves the local API on `127.0.0.1:7777`.
-  </Step>
-</Steps>
+    Set `network.bootstrap` in `~/.grid/grid.toml` if the built-in list is empty (see
+    [Bootstrap nodes](/node/bootstrap)).
+  </Tab>
+</Tabs>
+
+The node solves its identity proof of work (a few seconds at 20 bits), loads the map, joins the network and
+serves the local API on `127.0.0.1:7777`.
 
 ## Development mode
 

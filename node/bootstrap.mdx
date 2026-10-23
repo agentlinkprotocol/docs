@@ -1,0 +1,64 @@
+---
+title: "Bootstrap nodes"
+description: "How a new node finds the Atlas, and how to run the first public node."
+---
+
+A new node needs the address of at least one node already in the Atlas. After its routing table fills, it
+no longer depends on that address. The binary ships with a built-in list (`DEFAULT_BOOTSTRAP` in
+`alp-grid-node/src/config.rs`), copied into `grid.toml` by `grid init`; operators can add their own.
+
+A bootstrap address is a libp2p multiaddr ending with the node's peer id:
+
+```text
+/dns4/boot.agentlinkprotocol.org/udp/4001/quic-v1/p2p/12D3KooW…
+/dns4/boot.agentlinkprotocol.org/tcp/4001/p2p/12D3KooW…
+```
+
+## Running the first public node
+
+A bootstrap node is an ordinary node with a stable public address. Nothing else is special about it: it holds
+no authority, and the network keeps working if it disappears once other nodes know each other.
+
+<Steps>
+  <Step title="A server">
+    Any VPS with a public IPv4, 2 vCPU, 4 GB RAM, 40 GB disk, Debian or Ubuntu. Open **4001/udp**, **4001/tcp**
+    and, for an observer, **443/tcp**.
+  </Step>
+  <Step title="A DNS name">
+    Point `boot.<your domain>` (A record) at the server. The multiaddr uses the name, so the IP can change later.
+  </Step>
+  <Step title="Install">
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/agentlinkprotocol/grid/main/deploy/install.sh | GRID_OBSERVER=1 GRID_CAPACITY_GIB=30 sh
+    ```
+    The first node has nobody to bootstrap from: that is expected (`Failed to trigger bootstrap: No known peers`
+    in the logs until a second node connects).
+  </Step>
+  <Step title="Publish its address">
+    ```bash
+    sudo grid peer-id --config /var/lib/grid/grid.toml --host boot.example.org
+    ```
+    prints the two multiaddrs. Put them in `DEFAULT_BOOTSTRAP`, in this page, and in `GRID_BOOTSTRAP` of your
+    other nodes. Back up `/var/lib/grid/node.key`: the peer id is derived from it.
+  </Step>
+  <Step title="Expose the observer API (optional)">
+    The Console reads `GET /v1/atlas/stats`. Put a reverse proxy with TLS in front of `127.0.0.1:7777`:
+    ```text
+    # /etc/caddy/Caddyfile
+    observer.example.org {
+        reverse_proxy 127.0.0.1:7777
+    }
+    ```
+    Everything except `/healthz`, `/openapi.json` and `/v1/atlas/stats` still requires the bearer token.
+    Then set `OBSERVER_URLS=https://observer.example.org` and `OBSERVER_TOKEN=…` on the Console.
+  </Step>
+  <Step title="Run at least two more nodes elsewhere">
+    At another provider, another network prefix. The diversity rule (2 guardians per operator and per /16)
+    needs several operators before data is spread the way it should be; the Console shows the largest share.
+  </Step>
+</Steps>
+
+## Updating
+
+`install.sh` keeps an existing `grid.toml`; re-running it upgrades the binaries and restarts the service.
+Docker: `docker pull ghcr.io/agentlinkprotocol/grid:latest && docker compose up -d`.
