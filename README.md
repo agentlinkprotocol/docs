@@ -12,5 +12,5 @@ mintlify dev
 
 ## Branches and releases
 
-Work on `develop`, open a pull request to `main` (`ci`: navigation pages exist, no broken links, OpenAPI parses).
+Work on `develop`, open a pull request to `main` (`ci` runs on the pull request only: navigation pages exist, no broken links, OpenAPI parses).
 Mintlify deploys `main` by itself once its GitHub app is installed on the repository.
