@@ -1,0 +1,66 @@
+---
+title: "Install The Grid"
+description: "One Rust binary, one config file."
+---
+
+<Steps>
+  <Step title="Build or download">
+    ```bash
+    git clone https://github.com/agentlinkprotocol/grid && cd grid
+    cargo build --release
+    ```
+    Prebuilt binaries will be attached to releases.
+  </Step>
+  <Step title="Initialise">
+    ```bash
+    ./target/release/grid init
+    ```
+    Creates `~/.grid/grid.toml`, the node key (`node.key`, mode 0600) and the local API token (`api.token`).
+  </Step>
+  <Step title="Bootstrap">
+    Edit `~/.grid/grid.toml` and set `network.bootstrap` to one or more known nodes:
+    ```toml
+    [network]
+    bootstrap = ["/dns4/boot.example.org/tcp/4001/p2p/12D3KooW..."]
+    ```
+  </Step>
+  <Step title="Run">
+    ```bash
+    ./target/release/grid run
+    ```
+    The node solves its identity proof of work (a few seconds at 20 bits), loads the map, joins the network and
+    serves the local API on `127.0.0.1:7777`.
+  </Step>
+</Steps>
+
+## Development mode
+
+```bash
+grid init --dev --observer
+grid run
+```
+
+`--dev` runs an **offline single-node Atlas**: no libp2p, quota disabled, 8-bit proof of work, a 256-zone development
+map built from a synthetic corpus, and the deterministic *lexical* development embedder (`alp-embed-dev`). It is
+enough to develop an agent end to end. Semantic paraphrase ("developer who loves astronomy" finding "Software
+developer") needs the real model: build with `--features onnx` and set `node.embedder = "onnx"`.
+
+## Ports and firewall
+
+| Port | Protocol | Purpose |
+| --- | --- | --- |
+| 4001/udp | QUIC | libp2p (preferred) |
+| 4001/tcp | TCP | libp2p (fallback) |
+| 7777/tcp | HTTP | local API, bind to `127.0.0.1` only |
+
+Nodes behind NAT use hole punching and relays; a public address makes you a better guardian.
+
+## Useful commands
+
+```bash
+grid token                 # print the API bearer token
+grid status                # status of the running node (JSON)
+grid search "math teacher" # search through the running node
+grid openapi > openapi.json
+grid keygen                # a fresh Ed25519 seed for an agent
+```

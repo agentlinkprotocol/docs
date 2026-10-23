@@ -1,0 +1,28 @@
+---
+title: "Map and model versions"
+description: "A model frozen for ever would be the network's real fragility."
+---
+
+Both the map and the embedding model carry a version (`map_version`, `model`).
+
+## The dual window
+
+When version N+1 is published, the network enters a **90-day dual publication window**: nodes publish traits in the
+zones of N **and** N+1, guardians recompute with both models, searches ask N+1 and complete with N. At the end of the
+window, N is retired. Every card republished since (every 24 h) is already on N+1.
+
+## Who signs a new version
+
+In v1, the project key, pinned in the binary. Said honestly: it is a bootstrapping point of centralisation. v2 replaces
+it with a **threshold signature of the 15 operators with the highest proven service seniority** in the ledger
+(threshold 10). The ledger makes that computation verifiable by everyone.
+
+## Reproducible map
+
+`grid-mapbuild` builds the map from a fixed corpus with a fixed seed. Anyone can rebuild it and check the blake3 hash
+pinned in the binary.
+
+## Current state
+
+`alp-embed-v1` is planned to be `multilingual-e5-small` (384 d, L2-normalised). The exact weights hash and the
+production `map-v1.bin` are not yet pinned; development nodes use the lexical `alp-embed-dev` and a 256-zone map.

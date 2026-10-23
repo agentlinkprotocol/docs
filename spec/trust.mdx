@@ -1,0 +1,34 @@
+---
+title: "Trust: challenges, seniority, reputation, quotas"
+---
+
+## Common randomness and rounds
+
+A round lasts 30 s (drand beacon; a node without the beacon uses `now / 30`). For round `r` and target node `N`,
+the **controllers** are the 3 nodes whose position is closest to `blake3("alp-challenge" || r_be64 || N_pubkey)`.
+Anyone can recompute who was entitled to challenge whom.
+
+```text
+Challenge { round, target: b32, kind: {storage: {agent_id}} | {service: {map_version, zone_id, vector}}, controller_pubkey, sig }
+```
+
+The target verifies the signature and the entitlement (round within ±1), then answers with the card it must hold or
+the search result of the zone. No answer within 2 s is a failure. A failure is signed by the controller and appended to
+the ledger as `challenge_failure`.
+
+## Service seniority
+
+A day is **earned** when a node answered at least 90 % of its challenges that day. Seniority is the number of earned
+days in the last 365. It drives routing priority, guardian order and the operator's quota. It is non-transferable.
+
+## Reputation
+
+Each node keeps its own book from its own evidence: valid and invalid receipts, challenges, timeouts, latency.
+`direct = 0.3 × evidence + 0.7 × evidence × seniority_weight`. Opinions received from others are weighted by the
+direct trust in their author (EigenTrust style): `trust = 0.6 × direct + 0.4 × weighted opinions`. A clique of
+newcomers rating each other stays at zero. An operator's reputation is the seniority-weighted mean of its nodes.
+
+## Quotas
+
+`quota = 10 + 5 × seniority_days + 50 × proven_GiB`, capped during the 30-day trial to a linear ramp from 10 to 160.
+Each guardian checks the quota from its own view before accepting a new agent of an operator.

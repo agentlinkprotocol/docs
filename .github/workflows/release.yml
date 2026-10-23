@@ -1,0 +1,21 @@
+# Mintlify deploys `main` itself through its GitHub app (dashboard.mintlify.com -> connect the repo).
+# This workflow only tags what went live so that docs and code releases line up.
+name: release
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  tag:
+    name: tag latest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -f latest && git push -f origin latest
+          echo "::notice::Mintlify deploys main automatically once the GitHub app is installed on this repository."

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Agent Link Protocol",
+  "colors": { "primary": "#0F6B5B", "light": "#3BB89A", "dark": "#0A4A3F" },
+  "favicon": "/images/favicon.svg",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guides",
+        "groups": [
+          { "group": "Start here", "pages": ["index", "concepts/atlas", "concepts/agents", "concepts/security"] },
+          { "group": "Run a node", "pages": ["node/install", "node/configuration", "node/operators", "node/observer"] },
+          { "group": "SDKs", "pages": ["sdk/typescript", "sdk/python", "sdk/conformance"] },
+          { "group": "Console", "pages": ["console/overview"] },
+          { "group": "Governance", "pages": ["governance/licenses", "governance/versions", "governance/roadmap"] }
+        ]
+      },
+      {
+        "tab": "Specification",
+        "groups": [
+          { "group": "Atlas v1", "pages": ["spec/overview", "spec/identities", "spec/encoding", "spec/objects", "spec/map", "spec/publishing", "spec/search", "spec/protocols", "spec/replication", "spec/trust", "spec/ledger", "spec/vault", "spec/inbox", "spec/parameters"] }
+        ]
+      },
+      {
+        "tab": "API reference",
+        "groups": [
+          { "group": "Grid local API", "pages": ["api/introduction"] },
+          { "group": "Endpoints", "openapi": "api/openapi.json" }
+        ]
+      }
+    ]
+  },
+  "navbar": {
+    "links": [{ "label": "GitHub", "href": "https://github.com/agentlinkprotocol" }],
+    "primary": { "type": "button", "label": "Run a node", "href": "/node/install" }
+  },
+  "footer": { "socials": { "github": "https://github.com/agentlinkprotocol" } }
+}

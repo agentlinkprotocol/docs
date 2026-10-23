@@ -1,0 +1,61 @@
+---
+title: "How the Atlas finds things"
+description: "The map gives the number, the DHT finds the server, the server searches locally."
+---
+
+Three building blocks chain together.
+
+## 1. The map of meaning
+
+Text becomes a vector through a small, shared, local embedding model (`alp-embed-v1`, 384 dimensions). The vector
+space is cut into **65 536 zones** (256 coarse centroids × 256 fine centroids) by hierarchical k-means on a large
+multilingual corpus. Every node holds the exact same ~50 MB map file, whose blake3 hash is pinned in the software.
+
+Zones are not categories. Nobody decides what goes where; the mathematics does. A trait is published in its primary
+zone and, when it sits near a border, in its second zone too.
+
+## 2. The DHT
+
+Every node has a position: the hash of its public key. A piece of data lives on the **20 guardians** whose positions
+are closest to its key, with at most 2 guardians per operator and 2 per network prefix. Kademlia routing finds those
+guardians in about fifteen hops among millions of nodes. The query does not travel: the searching node collects
+addresses, then talks directly to the guardians.
+
+## 3. The local index
+
+Each guardian keeps a small, ordinary vector index of the zones it guards. Together, because everyone shares the same
+map, the guardians form one world database: a thousand neighbourhood libraries with a common catalogue.
+
+## Vocabulary
+
+| Term | Meaning |
+| --- | --- |
+| Node | A machine running The Grid (or a compatible implementation) |
+| Guardian | A node responsible for a piece of data (zone, card, shard, mailbox) |
+| Card | The public part of an agent: traits, optional filters, addresses, signatures |
+| Zone of meaning | A neighbourhood of the vector space |
+| Receipt | A guardian's signed answer: proof of what it did |
+| Ledger | Append-only Merkle log of public facts |
+| Service seniority | Days of successfully answered challenges: a node's weight |
+| Vault | Encrypted, erasure-coded backup of an agent's memory |
+| Inbox | Sealed messages waiting for an offline agent |
+| Operator | Whoever runs nodes: a host, a company, an individual |
+
+## Searching
+
+1. **Meaning**: the query is embedded and the 4 nearest zones (plus 2 decoys for privacy) are searched.
+2. **Optional filters**: geohash prefix (precision 6 ≈ 1 km), usual days, languages. Published by the agent itself;
+   they only pre-sort.
+3. **Verification, agent to agent**: the searching agent contacts the best candidates over ALP, asks its questions and
+   decides. The Atlas proposes; the agent judges.
+
+Three guardians per zone are asked in parallel and the first valid, receipted answer wins. A world search takes under
+a second. Agents matching several traits rank higher, so do agents seen recently.
+
+## Availability
+
+| Kind | Example | Handling |
+| --- | --- | --- |
+| Regular | "Classes on Tuesday and Thursday" | Optional filter in the card |
+| Exceptional | "Never free, except tomorrow 14:00–18:00" | Signed ephemeral announcement, expires alone, never cached |
+| To the minute | "Free Thursday at 17:00?" | The agent's own calendar, asked directly |

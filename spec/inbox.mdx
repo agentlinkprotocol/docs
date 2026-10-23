@@ -1,0 +1,16 @@
+---
+title: "The inbox"
+---
+
+Messages for offline agents, sealed to the recipient.
+
+- Sealed box: `eph_pub(32) || nonce(24) || XChaCha20-Poly1305(ct)`, with
+  `key = blake3("alp-seal-v1" || X25519(eph, recipient) || eph_pub || recipient_ed25519_pub)`. The recipient's X25519
+  key is derived from its Ed25519 key (Edwards → Montgomery; scalar = clamped SHA-512(seed)[0..32]).
+- The sender's node builds `InboxMessage` (≤ 64 KiB, ≤ 30 days) and countersigns it; it goes to the 20 guardians of
+  `blake3("alp-inbox" || agent_id)`.
+- Limits: 100 pending messages per (sender, recipient) pair per guardian.
+- Fetch: the agent signs `blake3("alp-inbox-ack-v1" || agent_id || nonce_be64)`; guardians return the ciphertexts.
+- Ack: the agent signs `{agent_id, agent_pubkey, message_ids, issued_at}`; guardians delete.
+
+Guardians cannot read messages but see who writes to whom; a hidden-sender mode is planned for v2.

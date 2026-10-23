@@ -1,0 +1,27 @@
+---
+title: "Search"
+---
+
+```text
+SearchRequest { map_version: u32, zone_id: u32, vector: f16[384] (bstr), filters: Filters, at: u64 | null, k: u16 (<= 100) }
+SearchHit     { agent_id, card_version, trait_index, text, score: f32, last_seen, kind }
+SearchResponse { hits: [SearchHit], receipt: Receipt }   -- receipt.response_hash = blake3(cbor(hits))
+```
+
+1. The node embeds the query, picks the `nprobe` nearest zones plus 2 decoys.
+2. For every zone, in parallel, it finds the guardians through Kademlia (with a cache of recent guardians), orders them
+   by trust (seniors first), asks 3 in parallel and keeps the **first valid answer**: receipt signature correct,
+   `request_hash` matching, `response_hash` matching the hits. Timeout 600 ms.
+3. A guardian filters exactly first (geohash prefix, days bitmask intersection, any common language), then scores by
+   cosine, then returns the top `k` of its zone. Ephemerals count only when `at` is inside their window.
+4. The node merges by agent: `score = best + 0.5 × Σ(other sims > 0.6) + freshness (0.05 if seen < 24 h, 0.02 if < 7 d)
+   + 0.1 if an ephemeral matched a requested date`.
+
+## Cache
+
+Ordinary results may be cached for 5 minutes. **Any request with `at` set, and any ephemeral entry, never goes through
+a cache**: always live from the guardians.
+
+## Local index
+
+Exact SIMD scan while a zone holds fewer than 20 000 entries; HNSW in memory above, rebuilt in the background.

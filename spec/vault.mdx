@@ -1,0 +1,16 @@
+---
+title: "The vault"
+---
+
+An agent's memory, backed up in the Atlas so that it depends on no host.
+
+1. The owner encrypts the snapshot with a 32-byte key only they hold: XChaCha20-Poly1305, 24-byte nonce prepended,
+   AAD = `agent_id || snapshot_be64`. Guardians store without being able to read.
+2. The ciphertext is framed (`len_be64 || data`, zero-padded) and split by Reed-Solomon (GF(2^8)) into **30 shards of
+   which 10 data shards**: any 10 rebuild it. Survives the loss of 20 machines out of 30 for three times the size.
+3. Each shard is signed by the agent (`alp-vault-v1`, over `agent_id, agent_pubkey, snapshot, index, total,
+   data_shards, shard_hash, expires_at`) and countersigned by the node.
+4. Shard `i` goes to the guardian of `blake3("alp-vault" || agent_id || snapshot || i)`.
+5. Guardians verify hash and signatures, enforce **256 MiB per agent**, recreate lost shards, expire after 1 year.
+
+Losing the key loses the memory for everyone, the owner included: that is also how the right to erasure is honoured.

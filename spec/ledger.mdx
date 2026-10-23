@@ -1,0 +1,15 @@
+---
+title: "The transparency ledger"
+---
+
+Public facts of the network go to an append-only log inspired by Certificate Transparency.
+
+- Entries chain by `prev_hash`; the hash of an entry is `blake3("alp-ledger-v1" || cbor(entry without witnesses))`.
+- Witnesses sign that hash; at least one valid witness is required to import an entry.
+- The **root** is the RFC 6962 Merkle tree hash over entry hashes (`blake3(0x00 || leaf)`, `blake3(0x01 || left || right)`).
+- Nodes exchange `{from_seq, limit}` requests to catch up and compare roots; an entry that does not chain is refused.
+- Facts: operator certificates, operator revocations, challenge failures, map version changes.
+- Retention: forever (a few kilobytes per node per day; challenge failures may be aggregated per node and day at scale).
+
+A root witnessed by many senior nodes cannot be rewritten without everyone noticing. The Console shows the latest
+facts and the root.

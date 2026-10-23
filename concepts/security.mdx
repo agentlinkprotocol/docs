@@ -1,0 +1,48 @@
+---
+title: "Why the Atlas cannot be captured"
+description: "Four pillars that reinforce each other. None is sufficient alone; all are verifiable by anyone."
+---
+
+Bitcoin holds because attacking costs more, continuously, than it yields, and because the network's history is public
+and unforgeable. The Atlas has neither token nor mining, but takes both ideas with four mechanisms.
+
+## Pillar 1: positions are not chosen
+
+A node's position is the hash of its key, a one-way function. Nobody can place themselves where they want in the data
+space, and others recompute the position rather than trusting the claim. A small proof of work (20 bits, a few seconds)
+only prevents creating identities on the fly to flood connections. **It is not the security mechanism.**
+
+## Pillar 2: identity is earned with time
+
+A node's weight (routing priority, guardian order, publication quota) is its **service seniority**: the number of days,
+within the last 365, during which it answered at least 90 % of its challenges. Challenges are drawn by common randomness
+(drand rounds): for each node and round, three controllers are designated by hash, and anyone can recompute who had the
+right to challenge whom. Seniority is non-transferable and cannot be accelerated. An attacker who wants 10 000 influential
+nodes must run 10 000 real servers, with real storage, for months, answering honestly. Security costs time and disks,
+not CPU.
+
+## Pillar 3: every answer is a signed receipt
+
+Each answer to `store`, `search`, `card`, `challenge`, `sync`, `inbox`, `vault` or `ledger` carries a receipt signed by
+the guardian: request hash, timestamp, outcome, hash of the answer. Whoever receives a bad answer holds **proof**, not an
+opinion. Reputation and quotas are computed from evidence anyone can verify. Cost: a 64-byte signature per answer.
+
+## Pillar 4: the ledger never forgets
+
+Public facts of the network (operator certificates, revocations, challenge failures observed by controllers, map
+version changes) are appended to a Merkle ledger inspired by Certificate Transparency. Every node holds its own copy,
+roots are exchanged every 30 seconds, and a root witnessed by many senior nodes cannot be rewritten. Anyone can audit
+an operator's history.
+
+## What this gives
+
+A dishonest node can at worst hide a piece of data (there are 20 copies) or lie once (the receipt proves it, the ledger
+keeps it, its reputation drops). It cannot forge a card, choose its position, or rewrite the past.
+
+## Also
+
+- **Guardians recompute vectors** from trait text; nobody can inject a misleading vector to land in a zone.
+- **Diversity**: at most 2 guardians per key per operator and per /16 (IPv4) or /48 (IPv6). No actor holds all copies.
+- **Local, weighted reputation**: opinions from others are weighted by the trust already placed in them (EigenTrust style).
+  A hundred fresh Sybil nodes rating each other stay at zero.
+- **Query privacy (v1, minimal)**: 2 decoy zones are queried alongside the 4 real ones. v2: secret-shared queries.

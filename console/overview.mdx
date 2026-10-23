@@ -1,0 +1,27 @@
+---
+title: "The Console"
+description: "The public site that shows the Atlas live."
+---
+
+The Console is a Next.js application (App Router, shadcn/ui, AGPL-3.0) that reads one or more
+[observer nodes](/node/observer) and shows the network as it is.
+
+## Pages
+
+1. **Overview**: nodes, operators, searches per minute, ledger size, health.
+2. **Nodes and operators**: share of each operator, with the "never a majority" rule made visible, seniority
+   histogram, network prefixes.
+3. **Zones**: hottest zones of meaning, entries held, fill ratio.
+4. **Ledger**: latest public facts (certificates, revocations, challenge failures), root hash.
+5. **Explorer**: a semantic search of public cards (what is public is public anyway), without an exhaustive list.
+
+## Deploy
+
+```bash
+git clone https://github.com/agentlinkprotocol/console && cd console
+cp .env.example .env.local     # OBSERVER_URLS=https://observer.example.org:7777
+npm install && npm run build && npm start
+```
+
+`OBSERVER_URLS` accepts a comma-separated list; the Console merges their views and shows which observer answered.
+Without any reachable observer it runs in **demo mode** with simulated data, clearly labelled.

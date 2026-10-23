@@ -1,0 +1,32 @@
+name: ci
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [develop]
+jobs:
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: docs.json is valid JSON and every page exists
+        run: |
+          node -e '
+            const fs = require("fs");
+            const cfg = JSON.parse(fs.readFileSync("docs.json", "utf8"));
+            const pages = [];
+            const walk = (n) => { if (Array.isArray(n)) n.forEach(walk); else if (n && typeof n === "object") { if (Array.isArray(n.pages)) n.pages.forEach(p => typeof p === "string" ? pages.push(p) : walk(p)); if (n.groups) walk(n.groups); if (n.tabs) walk(n.tabs); if (n.openapi) pages.push(n.openapi.replace(/\.json$/, "")); } };
+            walk(cfg.navigation);
+            const missing = pages.filter(p => !fs.existsSync(p + ".mdx") && !fs.existsSync(p + ".json"));
+            if (missing.length) { console.error("missing pages:", missing); process.exit(1); }
+            console.log(pages.length, "pages ok");
+          '
+      - name: Broken links
+        run: npx -y mint@latest broken-links
+      - name: OpenAPI document parses
+        run: node -e 'const d=require("./api/openapi.json"); if(!d.openapi||!d.paths) process.exit(1); console.log(Object.keys(d.paths).length, "paths")'

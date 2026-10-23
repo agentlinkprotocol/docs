@@ -1,0 +1,30 @@
+---
+title: "Atlas specification v1"
+description: "Normative description of the network protocol. Implementations in any language must follow it."
+---
+
+This specification describes the Atlas network protocol: identities, encoding, signed objects, the semantic map,
+publication, search, wire protocols, replication, trust, ledger, vault and inbox. The Grid is the reference
+implementation; a compatible implementation in another language joins the same Atlas.
+
+## Targets
+
+| Criterion | Target |
+| --- | --- |
+| Entries | 1 billion eventually |
+| Nodes | 10 000 to 1 million |
+| World search (p95) | under 1 s |
+| Publication usable | under 1 s |
+| Storage per standard node | a few GB |
+
+## Non-negotiable principles
+
+- No node is indispensable; no actor chooses what it stores.
+- Never trust a node: everything it produces must be verifiable (signatures, recomputation, receipts).
+- Do not rewrite what exists: assemble proven libraries, write only the network.
+
+## Conformance
+
+An implementation is conformant when it produces byte-identical encodings and signatures for the published
+test vectors (`grid/test-vectors/v1.json`), speaks the `/alp/atlas/*/1` protocols, enforces the validation rules of
+[Objects](/spec/objects) and [Publishing](/spec/publishing) as a guardian, and signs a receipt for every answer.

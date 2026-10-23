@@ -1,0 +1,32 @@
+---
+title: "Identities and keys"
+---
+
+All keys are Ed25519. All hashes are blake3 (32 bytes).
+
+| Entity | Identifier |
+| --- | --- |
+| Node | Ed25519 key. libp2p `PeerId`. Position in the key space = `blake3(pubkey)` (256 bits). |
+| Operator | Ed25519 key that issues `OperatorCert { operator_pubkey, node_pubkey, issued_at, expires_at, sig }` |
+| Agent | Ed25519 key. `AgentId = "alp1" + base32_lower_nopad(blake3(pubkey)[0..20])` (36 characters) |
+
+## Identity proof of work
+
+A node is accepted only if `blake3("alp-pow" || pubkey || nonce_be64)` starts with `POW_BITS` (20) zero bits.
+Anti-spam only; weight comes from service seniority.
+
+## Keys in the DHT
+
+| Object | Key |
+| --- | --- |
+| Card | `blake3("alp-card" ‖ agent_id)` |
+| Zone | `blake3("alp-zone" ‖ map_version_be32 ‖ zone_id_be32)` |
+| Inbox | `blake3("alp-inbox" ‖ agent_id)` |
+| Vault shard | `blake3("alp-vault" ‖ agent_id ‖ snapshot_be64 ‖ index_u8)` |
+
+Guardians of a key are the `REPLICATION` (20) closest alive nodes by XOR distance, after the diversity rule
+(at most 2 per operator, 2 per /16 or /48) and the overflow rule (fill < 80 %).
+
+## ALP address (placeholder)
+
+Until the ALP specification fixes it: `alp://<agent_id>@<multiaddr>`.

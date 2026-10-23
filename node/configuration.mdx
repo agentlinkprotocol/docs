@@ -1,0 +1,43 @@
+---
+title: "Configuration"
+description: "grid.toml, section by section."
+---
+
+```toml
+data_dir = "/home/me/.grid"
+
+[network]
+listen = ["/ip4/0.0.0.0/udp/4001/quic-v1", "/ip4/0.0.0.0/tcp/4001"]
+bootstrap = []
+offline = false            # true = single-node development Atlas
+
+[api]
+listen = "127.0.0.1:7777"
+cors_origins = []          # ["*"] on an observer that feeds the Console
+
+[node]
+capacity_gib = 10          # declared storage; fill ratio is what gets balanced
+observer = false           # expose GET /v1/atlas/stats for the Console
+embedder = "hash"          # "onnx" for alp-embed-v1 (build with --features onnx)
+map = "dev"                # or a path to map-v1.bin
+# map_hash = "…"           # expected blake3 of the map file
+pow_bits = 20
+enforce_quota = true
+nprobe = 4                 # zones probed per search (16 on the 256-zone dev map)
+```
+
+## Keys and token
+
+- `node.key`: hex Ed25519 seed. Back it up: the node's position and seniority are tied to it.
+- `api.token`: bearer token for the local API. Anything that can read this file can publish through your node.
+
+## Operator certificate
+
+By default a node is its own operator (self-signed certificate). A host running many nodes signs each node's
+certificate with one operator key so that quotas and the diversity rule apply to the whole fleet. See
+[Operators](/node/operators).
+
+## Resources
+
+A standard node keeps a few GB. CPU is spent recomputing vectors for incoming traits (milliseconds each) and
+answering searches (an exact scan up to 20 000 entries per zone, HNSW above). Memory holds the zone indexes.

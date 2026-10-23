@@ -1,0 +1,14 @@
+---
+title: "Replication, diversity, repair, balancing"
+---
+
+- Replication factor **20** per key.
+- **Diversity**: at most 2 guardians per key per operator and per network prefix (/16 IPv4, /48 IPv6). A node that
+  would be in excess does not store.
+- **Overflow**: above 80 % fill a node refuses new copies; the next-closest node takes them.
+- **Virtual nodes**: one identity per 64 GiB declared, at most 64, each earning its own seniority.
+- **Repair (anti-entropy)**: every guardian periodically sends `sync { key, have }` to the other guardians of each key it
+  holds. The answer carries what the requester lacks **and** what the responder holds, so the requester pushes what
+  the responder lacks. A node that just became a guardian therefore receives its copies from the existing ones.
+- Neighbours are checked every 10 minutes; a neighbour silent 3 times is dropped.
+- **Soft migration**: nodes above the threshold transfer to the emptiest nodes at a bounded rate (2 MiB/s).

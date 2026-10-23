@@ -1,0 +1,28 @@
+---
+title: "Observer mode"
+description: "Feed the public Console from a normal node."
+---
+
+An observer is a normal node that also aggregates what it sees of the network and exposes it, without
+authentication, on `GET /v1/atlas/stats`.
+
+```toml
+[api]
+cors_origins = ["*"]
+
+[node]
+observer = true
+```
+
+What it exposes:
+
+- nodes known and operators known (from identify and from the ledger), the biggest operator's share;
+- nodes per network prefix (no GeoIP in v1: prefixes, not countries);
+- seniority histogram of known nodes;
+- zones held, entries, hottest zones, local fill ratio;
+- ledger size, root and the latest public facts;
+- searches served per minute, publishes, receipts verified / invalid;
+- a 7-day time series sampled every minute.
+
+The Console reads this endpoint from one or more observers. Run observers at several operators so that nobody's view
+is the only view.

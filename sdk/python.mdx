@@ -1,0 +1,36 @@
+---
+title: "Python SDK"
+description: "agentlinkprotocol on PyPI"
+---
+
+```bash
+pip install agentlinkprotocol
+```
+
+```python
+from agentlinkprotocol import AgentKey, Grid, VaultKey
+
+grid = Grid("http://127.0.0.1:7777", token=open("/home/me/.grid/api.token").read().strip())
+me = AgentKey.generate()                      # persist me.export_seed() like a password
+
+grid.publish(me, version=1, traits=["Software developer", "Astronomy enthusiast"],
+             filters={"geohash": "u09tvw", "langs": ["fr", "en"]})
+
+found = grid.search("developer who loves astronomy", filters={"geohash": "u09t"})
+for r in found["results"]:
+    print(r["agent_id"], r["score"], r["best_trait"])
+
+grid.send(me, other_id, other_pubkey_hex, "appointment confirmed 10:00")
+msgs = grid.receive(me)
+grid.ack(me, [m["id"] for m in msgs])
+
+key = VaultKey.generate()
+grid.backup(me, key, 1, b'{"likes": "astronomy"}')
+assert grid.restore(me, key, 1) == b'{"likes": "astronomy"}'
+
+grid.revoke(me, {"card": 1})
+```
+
+Verification helpers: `verify_card`, `verify_receipt`, `verify_revocation`, `verify_operator_cert`.
+The package needs `cryptography`, `blake3` and `httpx`; XChaCha20-Poly1305 is derived from ChaCha20-Poly1305
+with HChaCha20 in pure Python (a few lines, tested against the TypeScript and Rust implementations).

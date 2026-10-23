@@ -1,0 +1,25 @@
+---
+title: "Wire protocols"
+---
+
+Stack: libp2p with QUIC (preferred) and TCP transports, Noise, Yamux, Identify (`/alp/atlas/id/1`, agent string
+`grid/<version> op=<operator pubkey hex>`), Kademlia (`/alp/atlas/kad/1`, `k = 20`, `α = 3`, routing only).
+
+Data travels over request-response protocols, CBOR encoded (size limit 32 MiB), every response carrying a
+[Receipt](/spec/objects):
+
+| Protocol | Request → Response |
+| --- | --- |
+| `/alp/atlas/store/1` | `StoreRequest = {card} \| {zone} \| {ephemeral} \| {revocation}` → `{receipt}` |
+| `/alp/atlas/search/1` | `SearchRequest` → `{hits, receipt}` |
+| `/alp/atlas/card/1` | `{agent_id}` → `{card?, revocation?, receipt}` |
+| `/alp/atlas/challenge/1` | `Challenge` → `{proof: {card} \| {hits} \| "missing", receipt}` |
+| `/alp/atlas/sync/1` | `{key, have: [b32]}` → `{missing: [StoreRequest], have: [b32], receipt}` |
+| `/alp/atlas/inbox/1` | `{deposit} \| {fetch: {agent_id, agent_pubkey, nonce, auth}} \| {ack}` → `{messages, receipt}` |
+| `/alp/atlas/vault/1` | `{put: VaultShard} \| {get: {agent_id, snapshot, index}}` → `{shard?, receipt}` |
+| `/alp/atlas/ledger/1` | `{from_seq, limit}` → `{entries, root, size, receipt}` |
+
+The envelope is one externally tagged enum per direction (`AtlasRequest`, `AtlasResponse`) so that one codec serves
+all protocols; the protocol name chosen for a request must match its variant.
+
+Bootstrap nodes are listed in the configuration; after the first routing-table fill they are no longer needed.

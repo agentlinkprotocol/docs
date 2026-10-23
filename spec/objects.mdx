@@ -1,0 +1,66 @@
+---
+title: "Signed objects"
+---
+
+Field order below is the canonical order.
+
+```text
+OperatorCert { operator_pubkey: b32, node_pubkey: b32, issued_at: u64, expires_at: u64, sig: b64 }
+
+Filters { geohash: tstr | null, days: u8 | null, langs: [tstr] }
+  geohash: 1..=12 characters of the geohash alphabet, published at precision 6, matched by prefix
+  days: bitmask Monday (bit 0) .. Sunday (bit 6), non-zero
+  langs: ISO 639-1 lowercase, at most 16
+
+Card {
+  agent_id, agent_pubkey: b32, version: u64 (>= 1, strictly increasing),
+  endpoints: [tstr] (<= 8, alp://…, <= 512 chars), traits: [tstr] (1..=32, 1..=200 chars, trimmed, no control chars),
+  filters: Filters, model: tstr, map_version: u32,
+  issued_at: u64, last_seen: u64 (issued_at <= last_seen <= now), expires_at: u64 (<= issued_at + 90 days),
+  operator_cert: OperatorCert, agent_sig: b64, node_sig: b64
+}
+
+Ephemeral {
+  agent_id, agent_pubkey: b32, ephemeral_id: b16, text: tstr, filters: Filters,
+  valid_from: u64, valid_until: u64 (<= valid_from + 7 days),
+  operator_cert: OperatorCert, agent_sig: b64, node_sig: b64
+}
+
+Revocation {
+  agent_id, target: {card: u64} | {ephemeral: b16}, issued_at: u64,
+  by: "agent" | "operator", signer_pubkey: b32, sig: b64
+}
+  by = agent    => signer_pubkey is the card's agent_pubkey
+  by = operator => signer_pubkey is the card's operator_cert.operator_pubkey (ledger fact)
+
+Receipt {
+  node_pubkey: b32, request_hash: b32 (blake3 of the canonical request), kind: tstr,
+  timestamp: u64, outcome: "ok" | "not_found" | {rejected: tstr}, response_hash: b32, sig: b64
+}
+  kind in store, search, card, challenge, sync, inbox, vault, ledger
+
+LedgerEntry { seq: u64, prev_hash: b32, timestamp: u64, event: LedgerEvent, witnesses: [{node_pubkey, sig}] }
+LedgerEvent = {operator_cert: OperatorCert} | {revocation: Revocation}
+            | {challenge_failure: {node_pubkey, round, controller_pubkey, controller_sig}}
+            | {map_version: {map_version, model, map_hash, signer_pubkey, sig}}
+
+ZoneEntry (what a guardian indexes; never sent with a vector) {
+  agent_id, card_version, trait_index: u8, text, filters, last_seen, expires_at,
+  kind: "permanent" | {ephemeral: {ephemeral_id, valid_from, valid_until}}
+}
+
+InboxMessage { to, from_pubkey, message_id: b16, ciphertext: bstr (<= 64 KiB), deposited_at, expires_at (<= +30 days), operator_cert, node_sig }
+InboxAck { agent_id, agent_pubkey, message_ids: [b16], issued_at, sig }
+VaultShard { agent_id, agent_pubkey, snapshot: u64, index: u8, total: u8 (30), data_shards: u8 (10), shard_hash: b32, data: bstr, expires_at, operator_cert, agent_sig, node_sig }
+```
+
+## Guardian validation (normative)
+
+A guardian rejects, with a `rejected` receipt, anything that fails:
+
+- structural limits above; `model` must be the network's model; `map_version` must be the guardian's;
+- `OperatorCert` valid and not expired; agent signature; node countersignature;
+- version not lower than the newest it has seen for the agent, and not revoked;
+- for zone entries: each trait **recomputed** must belong to the zone (primary or second zone);
+- quota of the operator, from the guardian's own view; capacity (fill < 80 %) for new data;
+- ephemerals: at most 10 active per agent.
